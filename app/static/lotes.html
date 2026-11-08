@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lotes · Banco Aurora</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<header id="topo"></header>
+<main>
+  <h1>Lotes de transações</h1>
+  <p class="sub">Cada arquivo é uma semana. O sistema valida o arquivo contra o contrato de features, grava as transações e pontua com o modelo <code>@champion</code>.</p>
+  <div id="mensagem"></div>
+
+  <div class="card">
+    <form id="form-lote">
+      <label for="arquivo">CSV de transações da semana</label>
+      <input type="file" id="arquivo" accept=".csv" required>
+      <button type="submit" id="enviar">Enviar lote</button>
+    </form>
+  </div>
+
+  <div class="card wrap" id="tabela"><p class="mut">Carregando…</p></div>
+  <p class="mut"><b>Repontuar</b> roda o modelo que está em produção agora sobre as transações já gravadas.
+    A predição antiga não é apagada; o painel passa a usar a mais recente.</p>
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+async function listar() {
+  const lotes = await api("/api/lotes");
+  const alvo = document.getElementById("tabela");
+  if (!lotes.length) { alvo.innerHTML = `<p class="mut">Nenhum lote recebido ainda.</p>`; return; }
+  alvo.innerHTML = `<table>
+    <thead><tr><th>Semana</th><th class="txt">Arquivo</th><th class="txt">Recebido em</th><th>Linhas</th>
+      <th>Contrato</th><th>Rótulos</th><th></th><th></th></tr></thead>
+    <tbody>${lotes.map(l => `<tr>
+      <td>${l.semana}</td><td class="txt">${esc(l.arquivo)}</td><td class="txt">${data(l.recebido_em)}</td>
+      <td>${num(l.qtd_linhas)}</td><td>v${esc(l.versao_contrato)}</td><td>${num(l.rotulos)}</td>
+      <td><a href="/api/semanas/${l.semana}/dados.csv">baixar dados</a></td>
+      <td><button class="sec" onclick="repontuar(${l.semana}, this)">Repontuar</button></td>
+    </tr>`).join("")}</tbody></table>`;
+}
+
+async function repontuar(semana, botao) {
+  if (!confirm(`Pontuar a semana ${semana} de novo com o modelo em produção agora?`)) return;
+  botao.disabled = true;
+  try {
+    const r = await api(`/api/lotes/${semana}/repontuar`, { method: "POST" });
+    mostrar("ok", `${r.msg} Bloqueadas: ${pct(r.pct_bloqueado)}.`);
+    await Promise.all([listar(), montarTopo()]);
+  } catch (e) { mostrarErro(e); } finally { botao.disabled = false; }
+}
+
+document.getElementById("form-lote").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const botao = document.getElementById("enviar");
+  botao.disabled = true; botao.textContent = "Enviando…";
+  try {
+    const r = await enviarArquivo("/api/lotes", document.getElementById("arquivo"));
+    mostrar(r.pontuada ? "ok" : "erro", r.pontuada ? `${r.msg} Bloqueadas: ${pct(r.pct_bloqueado)}.` : r.msg);
+    ev.target.reset();
+    await Promise.all([listar(), montarTopo()]);
+  } catch (e) { mostrarErro(e); }
+  finally { botao.disabled = false; botao.textContent = "Enviar lote"; }
+});
+
+montarTopo();
+listar().catch(mostrarErro);
+</script>
+</body>
+</html>

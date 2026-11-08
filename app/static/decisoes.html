@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Decisões · Banco Aurora</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<header id="topo"></header>
+<main>
+  <h1>Registro de decisões</h1>
+  <p class="sub">Uma decisão por semana recebida, na ordem, mesmo quando a decisão é "nada a fazer".
+    A versão do modelo e do contrato em vigor são gravadas automaticamente.</p>
+  <div id="mensagem"></div>
+
+  <div class="card">
+    <form id="form-decisao">
+      <div class="grid">
+        <div><label for="semana">Semana</label><select id="semana" required></select></div>
+        <div><label for="retreinou">Retreinou o modelo?</label>
+          <select id="retreinou"><option value="false">não</option><option value="true">sim</option></select></div>
+      </div>
+      <label for="diagnostico">Diagnóstico — o que o monitoramento mostrou nesta semana</label>
+      <textarea id="diagnostico" required></textarea>
+      <label for="acao">Ação — o que você fez (ou por que não fez nada)</label>
+      <textarea id="acao" required></textarea>
+      <label for="observacoes">Observações (opcional)</label>
+      <textarea id="observacoes"></textarea>
+      <p><button type="submit" id="enviar">Registrar decisão</button> <span class="mut" id="aviso"></span></p>
+    </form>
+  </div>
+
+  <div class="card wrap" id="tabela"><p class="mut">Carregando…</p></div>
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+async function carregarSemanas() {
+  const lotes = await api("/api/lotes");
+  document.getElementById("semana").innerHTML = lotes.map(l => `<option value="${l.semana}">${l.semana}</option>`).join("");
+  document.getElementById("enviar").disabled = !lotes.length;
+  document.getElementById("aviso").textContent = lotes.length ? "" : "Envie um lote antes de registrar decisões.";
+}
+
+async function listar() {
+  const ds = await api("/api/decisoes");
+  const alvo = document.getElementById("tabela");
+  if (!ds.length) { alvo.innerHTML = `<p class="mut">Nenhuma decisão registrada ainda.</p>`; return; }
+  alvo.innerHTML = `<table>
+    <thead><tr><th>Semana</th><th class="txt">Registrada em</th><th class="txt">Diagnóstico</th><th class="txt">Ação</th>
+      <th>Retreinou</th><th>Modelo</th><th>Contrato</th></tr></thead>
+    <tbody>${ds.map(d => `<tr><td>${d.semana}</td><td class="txt">${data(d.registrado_em)}</td>
+      <td class="txt">${esc(d.diagnostico)}</td><td class="txt">${esc(d.acao)}</td>
+      <td>${d.retreinou ? "sim" : "não"}</td><td>${d.versao_modelo ? "v" + esc(d.versao_modelo) : "—"}</td>
+      <td>v${esc(d.versao_contrato)}</td></tr>`).join("")}</tbody></table>
+    <p><a href="/api/decisoes/exportar.csv">Exportar decisoes.csv</a> (vai na entrega das partes 2 e 3)</p>`;
+}
+
+document.getElementById("form-decisao").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const v = id => document.getElementById(id).value;
+  const botao = document.getElementById("enviar");
+  botao.disabled = true;
+  try {
+    const r = await api("/api/decisoes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ semana: Number(v("semana")), retreinou: v("retreinou") === "true",
+                             diagnostico: v("diagnostico"), acao: v("acao"), observacoes: v("observacoes") }),
+    });
+    mostrar("ok", r.msg);
+    ["diagnostico", "acao", "observacoes"].forEach(id => document.getElementById(id).value = "");
+    await listar();
+  } catch (e) { mostrarErro(e); } finally { botao.disabled = false; }
+});
+
+montarTopo();
+carregarSemanas().catch(mostrarErro);
+listar().catch(mostrarErro);
+</script>
+</body>
+</html>

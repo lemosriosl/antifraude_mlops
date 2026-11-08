@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Modelo · Banco Aurora</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<header id="topo"></header>
+<main>
+  <h1>Modelo em produção</h1>
+  <p class="sub">O sistema usa sempre <code>models:/antifraude@champion</code> do MLflow. Para trocar o modelo, mova o alias no MLflow;
+    o sistema percebe na próxima chamada e anota a troca abaixo.</p>
+  <div id="mensagem"></div>
+  <div id="atual"></div>
+  <div class="card wrap">
+    <h3 style="margin-top:0">Histórico de trocas</h3>
+    <div id="trocas"><p class="mut">Carregando…</p></div>
+  </div>
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+async function carregar() {
+  montarTopo();
+  try {
+    const r = await api("/api/modelo");
+    const m = r.modelo;
+    if (m.ok) {
+      document.getElementById("atual").innerHTML = `
+        <div class="grid" style="margin-bottom:18px">
+          <div class="kpi"><span>Versão</span><b>v${esc(m.versao)}</b></div>
+          <div class="kpi"><span>Threshold (tag da versão)</span><b>${m.threshold}</b></div>
+          <div class="kpi"><span>Run de origem</span><b style="font-size:13px">${esc(m.run_id)}</b></div>
+          <div class="kpi"><span>Contrato em vigor</span><b>v${esc(r.contrato)}</b></div>
+        </div>
+        ${m.descricao ? `<div class="card"><b>Descrição da versão:</b> ${esc(m.descricao)}</div>` : ""}`;
+    } else {
+      mostrar("erro", m.erro);
+    }
+    document.getElementById("trocas").innerHTML = r.trocas.length ? `<table>
+      <thead><tr><th class="txt">Quando</th><th>De</th><th>Para</th><th>Threshold</th><th class="txt">Motivo (tag da versão)</th></tr></thead>
+      <tbody>${r.trocas.map(t => `<tr><td class="txt">${data(t.trocado_em)}</td>
+        <td>${t.versao_anterior ? "v" + esc(t.versao_anterior) : "—"}</td><td>v${esc(t.versao_nova)}</td>
+        <td>${t.threshold}</td><td class="txt">${esc(t.motivo || "—")}</td></tr>`).join("")}</tbody></table>`
+      : `<p class="mut">Nenhuma troca registrada ainda.</p>`;
+  } catch (e) { mostrarErro(e); }
+}
+carregar();
+</script>
+</body>
+</html>

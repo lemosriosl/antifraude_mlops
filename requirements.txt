@@ -1,0 +1,16 @@
+# Versões testadas com o sistema (Python 3.10 a 3.13).
+# As mesmas de MLflow e scikit-learn usadas nas aulas.
+mlflow==3.16.0
+scikit-learn==1.8.0
+sqlalchemy<2.1          # o SQLAlchemy 2.1 quebra o mlflow server 2.19
+pandas
+numpy
+scipy
+pyyaml
+psycopg2-binary
+python-dotenv
+fastapi
+uvicorn[standard]
+python-multipart
+matplotlib
+jupyter

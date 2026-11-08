@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Painel · Banco Aurora</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<header id="topo"></header>
+<main>
+  <h1>Painel da Prevenção a Fraudes</h1>
+  <p class="sub">Uma linha por semana recebida. As colunas de fraude e custo só aparecem depois que as contestações (rótulos) daquela semana chegam.</p>
+  <div id="mensagem"></div>
+  <div class="card wrap" id="tabela"><p class="mut">Carregando…</p></div>
+  <p class="mut">Custo total = fraudes aprovadas (valor da transação) + R$ 15 por transação legítima bloqueada.
+    Exportar: <a href="/api/painel.csv">painel.csv</a>.</p>
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+async function carregar() {
+  const saude = await montarTopo();
+  if (saude && !saude.modelo.ok) mostrar("erro", saude.modelo.erro);
+  try {
+    const linhas = await api("/api/painel");
+    const alvo = document.getElementById("tabela");
+    if (!linhas.length) {
+      alvo.innerHTML = `<p class="mut">Nenhum lote recebido ainda. Envie o primeiro em <a href="/lotes">Lotes</a>.</p>`;
+      return;
+    }
+    const corpo = linhas.map(l => {
+      const pont = l.pontuadas > 0, rot = l.rotuladas > 0;
+      return `<tr>
+        <td>${l.semana}</td>
+        <td>${num(l.volume)}</td>
+        <td>${pont ? num(l.bloqueadas) : "—"}</td>
+        <td>${pont ? pct(l.pct_bloqueado) : "—"}</td>
+        <td>${pont ? brl(l.valor_bloqueado) : "—"}</td>
+        <td>${rot ? num(l.rotuladas) : "aguardando"}</td>
+        <td>${rot ? num(l.fraudes) : "—"}</td>
+        <td>${brl(l.fraude_evitada)}</td>
+        <td>${brl(l.fraude_perdida)}</td>
+        <td>${rot ? num(l.legitimas_bloqueadas) : "—"}</td>
+        <td><b>${brl(l.custo_total)}</b></td>
+        <td class="txt">${l.versoes ? "v" + esc(l.versoes) : "não pontuada"}</td>
+      </tr>`;
+    }).join("");
+    alvo.innerHTML = `<table>
+      <thead><tr><th>Semana</th><th>Transações</th><th>Bloqueadas</th><th>% bloqueado</th><th>Valor<br>bloqueado</th>
+        <th>Rotuladas</th><th>Fraudes</th><th>Fraude<br>evitada</th><th>Fraude<br>perdida</th><th>Legítimas<br>bloqueadas</th>
+        <th>Custo total</th><th class="txt">Modelo</th></tr></thead>
+      <tbody>${corpo}</tbody></table>`;
+  } catch (e) { mostrarErro(e); }
+}
+carregar();
+</script>
+</body>
+</html>

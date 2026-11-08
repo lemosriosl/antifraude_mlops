@@ -1,0 +1,12 @@
+{
+  "modelo": "antifraude",
+  "versao": "3",
+  "run_id": "7260ffdde12740b38a547f1a41c50a98",
+  "threshold": 0.29,
+  "semanas": [
+    11,
+    12
+  ],
+  "linhas": 39497,
+  "versao_contrato": "1.0"
+}

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rótulos · Banco Aurora</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/static/estilo.css">
+</head>
+<body>
+<header id="topo"></header>
+<main>
+  <h1>Rótulos (contestações)</h1>
+  <p class="sub">As contestações dos clientes chegam com uma semana de atraso: os rótulos da semana N vêm junto com o lote da semana N+1.
+    Envie sempre <b>depois</b> do lote a que se referem.</p>
+  <div id="mensagem"></div>
+
+  <div class="card">
+    <form id="form-rotulos">
+      <label for="arquivo">CSV de rótulos (id_transacao, fraude, data_contestacao)</label>
+      <input type="file" id="arquivo" accept=".csv" required>
+      <button type="submit" id="enviar">Enviar rótulos</button>
+    </form>
+  </div>
+
+  <div class="card wrap" id="tabela"><p class="mut">Carregando…</p></div>
+</main>
+
+<script src="/static/app.js"></script>
+<script>
+async function listar() {
+  const lotes = await api("/api/lotes");
+  const alvo = document.getElementById("tabela");
+  if (!lotes.length) { alvo.innerHTML = `<p class="mut">Nenhum lote recebido ainda.</p>`; return; }
+  const situacao = l => l.rotulos === l.qtd_linhas ? "completo" : (l.rotulos === 0 ? "aguardando" : "parcial");
+  alvo.innerHTML = `<table>
+    <thead><tr><th>Semana</th><th>Transações</th><th>Rótulos recebidos</th><th class="txt">Situação</th></tr></thead>
+    <tbody>${lotes.map(l => `<tr><td>${l.semana}</td><td>${num(l.qtd_linhas)}</td><td>${num(l.rotulos)}</td>
+      <td class="txt">${situacao(l)}</td></tr>`).join("")}</tbody></table>`;
+}
+
+document.getElementById("form-rotulos").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const botao = document.getElementById("enviar");
+  botao.disabled = true; botao.textContent = "Enviando…";
+  try {
+    const r = await enviarArquivo("/api/rotulos", document.getElementById("arquivo"));
+    mostrar(r.inseridos ? "ok" : "erro", r.msg);
+    ev.target.reset();
+    await listar();
+  } catch (e) { mostrarErro(e); }
+  finally { botao.disabled = false; botao.textContent = "Enviar rótulos"; }
+});
+
+montarTopo();
+listar().catch(mostrarErro);
+</script>
+</body>
+</html>
