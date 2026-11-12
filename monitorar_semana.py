@@ -14,13 +14,15 @@ def main():
     lote = carregar_semana(args.semana)
     if lote["versao_modelo"].astype(str).ne(versao).any():
         raise ValueError(f"Semana {args.semana} não está totalmente pontuada pelo champion v{versao}; repontue em Lotes")
+    if lote["threshold"].ne(threshold).any():
+        raise ValueError(f"Semana {args.semana} contém predições com outro threshold; repontue em Lotes")
     tabelas = monitorar(referencia, lote, threshold)
     pasta = Path("monitoramento") / f"semana_{args.semana:02d}"
     pasta.mkdir(parents=True, exist_ok=True)
     for nome, tabela in tabelas.items():
         if tabela is not None:
             tabela.to_csv(pasta / f"{nome}.csv", index=False)
-        print(f"\n{nome}\n{tabela.to_string(index=False) if tabela is not None else 'Aguardando rótulos completos'}")
+        print(f"\n{nome}\n{tabela.to_string(index=False) if tabela is not None else 'Aguardando os primeiros rótulos'}")
     print(f"\nChampion v{versao} | threshold {threshold} | tabelas em {pasta}")
 
 

@@ -25,7 +25,12 @@ _CAMINHO_CONTRATO = Path(__file__).resolve().parent / "contrato" / "contrato_fea
 
 def carregar_contrato(caminho=None):
     """Carrega o contrato de features usado para montar o pré-processador."""
-    caminho = Path(caminho) if caminho is not None else _CAMINHO_CONTRATO
+    if caminho is None:
+        caminho = _CAMINHO_CONTRATO
+        if not caminho.is_file():
+            # A célula de entrega exporta o YAML ao lado de features.py.
+            caminho = Path(__file__).with_name("contrato_features.yaml")
+    caminho = Path(caminho)
     with caminho.open(encoding="utf-8") as arquivo:
         return yaml.safe_load(arquivo)
 

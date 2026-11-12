@@ -1,6 +1,7 @@
 """Tabelas de monitoramento semanal do modelo antifraude."""
 
 from io import BytesIO
+from pathlib import Path
 from urllib.request import urlopen
 
 import numpy as np
@@ -31,7 +32,12 @@ def custo_decisao(y_true, valores, scores, threshold, custo_legitima_bloqueada=1
 
 def colunas_monitoradas(contrato=None):
     """Features contínuas e discretas conforme o contrato, mais score."""
-    contrato = contrato or carregar_contrato()
+    if contrato is None:
+        raiz = Path(__file__).resolve().parent
+        caminho = raiz / "contrato" / "contrato_features.yaml"
+        if not caminho.is_file():
+            caminho = raiz / "contrato_features.yaml"
+        contrato = carregar_contrato(caminho)
     continuas = [f["nome"] for f in contrato["features"]
                  if f["tipo"] == "float" or (f["tipo"] == "int" and f["nome"] not in {"hora_transacao", "dia_semana"})]
     discretas = [f["nome"] for f in contrato["features"] if f["nome"] not in continuas]
@@ -51,11 +57,16 @@ def drift_continuas(referencia, lote, colunas=None):
     _exigir_colunas(lote, colunas, "lote")
     linhas = []
     for coluna in colunas:
-        a = pd.to_numeric(referencia[coluna], errors="coerce").dropna().to_numpy()
-        b = pd.to_numeric(lote[coluna], errors="coerce").dropna().to_numpy()
+        a = pd.to_numeric(referencia[coluna], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+        b = pd.to_numeric(lote[coluna], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+        a = a[np.isfinite(a)]
+        b = b[np.isfinite(b)]
         teste = ks_2samp(a, b) if len(a) and len(b) else None
         linhas.append({
             "variavel": coluna, "n_referencia": len(a), "n_lote": len(b),
+            "invalidos_referencia": len(referencia) - len(a),
+            "invalidos_lote": len(lote) - len(b),
+            "status": "calculado" if teste else "sem_amostra_valida",
             "media_referencia": float(a.mean()) if len(a) else np.nan,
             "media_lote": float(b.mean()) if len(b) else np.nan,
             "D": float(teste.statistic) if teste else np.nan,
@@ -102,17 +113,17 @@ def saida_modelo(referencia, lote, threshold):
     linhas = []
     for nome, df in (("referencia", referencia), ("lote", lote)):
         _exigir_colunas(df, ["score", "valor_transacao"], nome)
-        score = pd.to_numeric(df["score"], errors="coerce")
-        valor = pd.to_numeric(df["valor_transacao"], errors="coerce")
-        if score.isna().any() or valor.isna().any():
+        score = pd.to_numeric(df["score"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+        valor = pd.to_numeric(df["valor_transacao"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
+        if not ((0 <= score) & (score <= 1)).all() or not np.isfinite(valor).all():
             raise ValueError(f"{nome}: score ou valor_transacao ausente/inválido")
         bloqueada = score >= threshold
         linhas.append({
             "conjunto": nome, "transacoes": len(df), "bloqueios": int(bloqueada.sum()),
             "taxa_bloqueio": float(bloqueada.mean()) if len(df) else np.nan,
-            "valor_bloqueado": float(valor.loc[bloqueada].sum()),
+            "valor_bloqueado": float(valor[bloqueada].sum()),
             "valor_total": float(valor.sum()),
-            "pct_valor_bloqueado": float(valor.loc[bloqueada].sum() / valor.sum()) if valor.sum() else np.nan,
+            "pct_valor_bloqueado": float(valor[bloqueada].sum() / valor.sum()) if valor.sum() else np.nan,
         })
     tabela = pd.DataFrame(linhas)
     tabela["delta_taxa_bloqueio_pp"] = (tabela["taxa_bloqueio"] - tabela.loc[0, "taxa_bloqueio"]) * 100
@@ -125,41 +136,57 @@ def saida_modelo(referencia, lote, threshold):
 def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bloqueada=15.0):
     """Recall, precision, PR-AUC (average precision) e custo, globais e por segmento.
 
-    Rótulos parciais geram erro. Recall sem fraudes e PR-AUC de grupos com
-    uma única classe são indefinidos (NaN).
+    Com rótulos parciais, as métricas descrevem apenas as transações rotuladas.
+    O custo final e os alertas de performance exigem cobertura completa.
     """
     linhas = []
+    cobertura_completa = {}
     for nome, df in (("referencia", referencia), ("lote", lote)):
         _exigir_colunas(df, ["fraude", "score", "valor_transacao", segmento], nome)
-        if df["fraude"].isna().any():
-            raise ValueError(f"{nome}: rótulos incompletos")
-        if not df["fraude"].isin([0, 1]).all():
+        if not df["fraude"].dropna().isin([0, 1]).all():
             raise ValueError(f"{nome}: fraude deve conter apenas 0 e 1")
-        if df[["score", "valor_transacao"]].isna().any().any():
-            raise ValueError(f"{nome}: score ou valor_transacao ausente")
+        cobertura_completa[nome] = not df.empty and df["fraude"].notna().all()
         grupos = [("global", "todos", df)]
-        grupos += [(segmento, str(valor), grupo) for valor, grupo in df.groupby(segmento, dropna=False)]
+        grupos += [(segmento, str(valor), grupo)
+                   for valor, grupo in df.groupby(segmento, dropna=False, observed=True)]
         for tipo, valor, grupo in grupos:
-            y = grupo["fraude"].to_numpy(dtype=int)
-            score = grupo["score"].to_numpy(dtype=float)
+            rotuladas = grupo.loc[grupo["fraude"].notna()]
+            y = rotuladas["fraude"].to_numpy(dtype=int)
+            score = rotuladas["score"].to_numpy(dtype=float)
+            valores = rotuladas["valor_transacao"].to_numpy(dtype=float)
+            if not np.isfinite(valores).all() or not ((0 <= score) & (score <= 1)).all():
+                raise ValueError(f"{nome}: score ou valor_transacao ausente/inválido")
             bloqueada = score >= threshold
+            custo_observado = (
+                custo_decisao(y, valores, score, threshold, custo_legitima_bloqueada) if len(y) else np.nan
+            )
             linhas.append({
                 "conjunto": nome, "segmento": tipo, "valor_segmento": valor,
                 "transacoes": len(grupo), "fraudes": int(y.sum()),
+                "rotuladas": len(y), "cobertura_rotulos": len(y) / len(grupo) if len(grupo) else np.nan,
                 "recall": float(recall_score(y, bloqueada, zero_division=0)) if y.sum() else np.nan,
                 "precision": float(precision_score(y, bloqueada, zero_division=0)) if bloqueada.sum() else np.nan,
                 "pr_auc": float(average_precision_score(y, score)) if len(np.unique(y)) == 2 else np.nan,
-                "custo": custo_decisao(y, grupo["valor_transacao"], score, threshold, custo_legitima_bloqueada),
+                "custo_observado": custo_observado,
+                "custo": custo_observado if cobertura_completa[nome] else np.nan,
             })
     tabela = pd.DataFrame(linhas)
-    tabela["custo_por_mil"] = 1000 * tabela["custo"] / tabela["transacoes"]
-    referencia = tabela.loc[tabela["conjunto"] == "referencia"].set_index(["segmento", "valor_segmento"])
-    motivos = []
+    tabela["custo_por_mil"] = 1000 * tabela["custo"] / tabela["transacoes"].replace(0, np.nan)
+    base_segmentos = tabela.loc[tabela["conjunto"] == "referencia"].set_index(["segmento", "valor_segmento"])
+    comparar = all(cobertura_completa.values())
+    motivos, status = [], []
     for linha in tabela.itertuples():
         if linha.conjunto == "referencia":
+            status.append("referencia")
             motivos.append("")
             continue
-        base = referencia.loc[(linha.segmento, linha.valor_segmento)]
+        chave = (linha.segmento, linha.valor_segmento)
+        if not comparar or chave not in base_segmentos.index:
+            status.append("rotulos_pendentes" if not comparar else "segmento_sem_referencia")
+            motivos.append("")
+            continue
+        base = base_segmentos.loc[chave]
+        status.append("comparado")
         minimo = LIMITE_QUEDA_GLOBAL_PP if linha.segmento == "global" else LIMITE_QUEDA_SEGMENTO_PP
         elegivel = linha.segmento == "global" or (
             linha.fraudes >= MIN_FRAUDES_SEGMENTO and base["fraudes"] >= MIN_FRAUDES_SEGMENTO)
@@ -174,18 +201,19 @@ def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bl
         motivos.append(motivo)
     tabela["motivos_alerta"] = motivos
     tabela["alerta"] = tabela["motivos_alerta"].ne("")
+    tabela["status_comparacao"] = status
     return tabela
 
 
 def monitorar(referencia, lote, threshold, segmento="canal"):
-    """Quatro tabelas; performance é None enquanto faltar algum rótulo."""
+    """Quatro tabelas; performance é None enquanto não houver nenhum rótulo."""
     tabelas = {
         "continuas": drift_continuas(referencia, lote),
         "discretas": drift_discretas(referencia, lote),
         "saida": saida_modelo(referencia, lote, threshold),
         "performance": None,
     }
-    if "fraude" in lote and lote["fraude"].notna().all():
+    if "fraude" in lote and lote["fraude"].notna().any():
         tabelas["performance"] = performance(referencia, lote, threshold, segmento)
     return tabelas
 
@@ -199,7 +227,7 @@ def carregar_semana(semana, url_base=None):
         df = pd.read_csv(BytesIO(resposta.read()), dtype={"id_transacao": str, "id_cliente": str})
     if df.empty:
         raise ValueError(f"Semana {semana} vazia na API; envie o lote em Lotes primeiro")
-    if df["score"].isna().any():
+    if not df["score"].between(0, 1).all():
         raise ValueError(f"Semana {semana} ainda não foi pontuada")
     return df
 

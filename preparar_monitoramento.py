@@ -14,7 +14,7 @@ from mlflow.tracking import MlflowClient
 
 import config
 import monitoramento
-from features import carregar_contrato
+from app.contrato import carregar
 
 
 def preparar(pasta=Path("referencia"), pasta_relatorio=Path("relatorio_zero")):
@@ -23,7 +23,7 @@ def preparar(pasta=Path("referencia"), pasta_relatorio=Path("relatorio_zero")):
     cliente = MlflowClient()
     versao = cliente.get_model_version_by_alias(config.NOME_MODELO, config.ALIAS_PRODUCAO)
     threshold = float(versao.tags[config.TAG_THRESHOLD])
-    contrato = carregar_contrato()
+    contrato = carregar()
     features = [f["nome"] for f in contrato["features"]]
 
     transacoes = pd.read_csv(config.RAIZ / "dados/transacoes_semanas_01_12.csv",
@@ -35,7 +35,7 @@ def preparar(pasta=Path("referencia"), pasta_relatorio=Path("relatorio_zero")):
     if validacao.empty or validacao["fraude"].isna().any() or validacao["id_transacao"].duplicated().any():
         raise ValueError("Validação das semanas 11 e 12 vazia, incompleta ou duplicada")
 
-    modelo = mlflow.sklearn.load_model(f"models:/{config.NOME_MODELO}@{config.ALIAS_PRODUCAO}")
+    modelo = mlflow.sklearn.load_model(f"models:/{config.NOME_MODELO}/{versao.version}")
     validacao["score"] = modelo.predict_proba(validacao[features])[:, 1]
     validacao = validacao[["id_transacao", "semana", *features, "score", "fraude"]]
     pasta.mkdir(parents=True, exist_ok=True)

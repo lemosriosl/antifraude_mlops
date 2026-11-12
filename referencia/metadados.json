@@ -1,8 +1,8 @@
 {
   "modelo": "antifraude",
-  "versao": "3",
-  "run_id": "7260ffdde12740b38a547f1a41c50a98",
-  "threshold": 0.29,
+  "versao": "7",
+  "run_id": "98e2f8417abf497ebb1132c0a39f5258",
+  "threshold": 0.09,
   "semanas": [
     11,
     12

@@ -51,7 +51,8 @@ class _Producao:
             raise SemModeloEmProducao(
                 f"Não há '{config.NOME_MODELO}@{config.ALIAS_PRODUCAO}' no MLflow ({config.MLFLOW_TRACKING_URI}). "
                 "Registre um modelo e aponte o alias champion para ele.") from e
-        if mv.version == self.versao:
+        versao = str(mv.version)
+        if versao == self.versao:
             return self
         if config.TAG_THRESHOLD not in mv.tags:
             raise SemModeloEmProducao(
@@ -66,13 +67,13 @@ class _Producao:
                 self._modelo = mlflow.pyfunc.load_model(uri)
                 self._sklearn = False
             anterior = banco.ultima_troca()
-            self.versao = mv.version
+            self.versao = versao
             self.threshold = float(mv.tags[config.TAG_THRESHOLD])
             self.run_id = mv.run_id
             self.descricao = mv.description
-            if anterior is None or str(anterior["versao_nova"]) != str(mv.version):
+            if anterior is None or str(anterior["versao_nova"]) != versao:
                 banco.registrar_troca(None if anterior is None else anterior["versao_nova"],
-                                      mv.version, self.threshold, mv.tags.get(config.TAG_MOTIVO))
+                                      versao, self.threshold, mv.tags.get(config.TAG_MOTIVO))
         return self
 
     def pontuar(self, df):

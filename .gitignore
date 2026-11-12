@@ -5,3 +5,5 @@ entrega_parte1_*.zip
 __pycache__/
 .ipynb_checkpoints/
 TODO.md
+monitoramento/
+resultados_validacao/modelo_candidato/

@@ -1,11 +1,11 @@
-# Versões testadas com o sistema (Python 3.10 a 3.13).
-# As mesmas de MLflow e scikit-learn usadas nas aulas.
+# Dependências do sistema e dos experimentos (Python 3.11 ou superior).
 mlflow==3.16.0
 scikit-learn==1.8.0
 sqlalchemy<2.1          # o SQLAlchemy 2.1 quebra o mlflow server 2.19
 pandas
 numpy
 scipy
+threadpoolctl
 pyyaml
 psycopg2-binary
 python-dotenv

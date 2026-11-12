@@ -6,11 +6,11 @@ O **modelo é seu**. O sistema só sabe usar o que você registrar no MLflow.
 
 ## O que você precisa
 
-- **Python 3.10 a 3.13**
+- **Python 3.11 ou superior** para o scikit-learn 1.8. Para carregar o modelo exportado com as mesmas dependências, use as versões descritas em `modelo_exportado/python_env.yaml` e `modelo_exportado/requirements.txt`.
 - **O seu Postgres** (o container que você já usa nas aulas), com um usuário que possa criar bancos
 - `psql` para rodar os scripts `.sql` (pode ser o do próprio container: `docker exec -i <container> psql ...`)
 
-Ambiente virtual é **recomendado, não obrigatório**: organize a pasta como preferir. As versões do `requirements.txt` são as testadas. Se você instalar no Python global e houver conflito com outro projeto, o ajuste é seu.
+Use um ambiente virtual para instalar o `requirements.txt` do projeto. O relatório de comparação registra as versões usadas na execução.
 
 ## Passo a passo
 
@@ -89,8 +89,9 @@ Trocar o modelo em produção = mover o alias `champion` no MLflow. O sistema pe
 | `contrato/contrato_features.yaml` | O contrato de features v1.0. O sistema valida todo lote contra ele |
 | `dados/` | Os dados da parte 1 (histórico rotulado, semanas 1 a 12) |
 | `demanda_parte1.md` | O que o negócio pediu |
-| `parte1.ipynb` | O roteiro técnico da parte 1: instruções, o código é seu |
-| `features.py`, `monitoramento.py` | Vazios: você escreve. Serão reutilizados nas partes 2 e 3 |
+| `parte1.ipynb` | Notebook da atividade com treinamento, registro e evidências da versão v7 |
+| `features.py`, `monitoramento.py` | Pré-processamento e monitoramento reutilizáveis nas partes 2 e 3 |
+| `avaliar_modelos.py` | Reprodução da comparação de modelos por custo, com as semanas e as features da atividade |
 | `CHANGELOG.md` | O histórico de versões do seu modelo, mantido por você |
 | `app/` | O sistema: API em FastAPI e front em HTML/CSS/JS puro (`app/static/`). Encanamento: vem pronto, não precisa mexer |
 | `sql/` | Criação dos bancos e das tabelas do sistema |
@@ -126,7 +127,20 @@ O painel mostra **a visão do negócio**. Drift e análise de performance por se
 
 Com o MLflow e o champion ativos, rode `python preparar_monitoramento.py` uma vez para pontuar as semanas 11 e 12, salvar `referencia/validacao_11_12.csv`, registrar a referência na run campeã e gerar `relatorio_zero/`. O [relatório zero](relatorio_zero/README.md) explica os limites de alerta.
 
-Depois de enviar uma semana na tela **Lotes**, rode `python monitorar_semana.py 13` (ajuste o número). O comando lê o CSV já pontuado da API, usa a referência da run apontada por `@champion` e salva drift e saída em `monitoramento/semana_13/`. Quando os rótulos da semana chegarem em **Rótulos**, rode o mesmo comando para obter também a performance global e por canal. Em caso de troca do champion, execute `python preparar_monitoramento.py` para registrar a referência da nova run.
+Depois de enviar uma semana na tela **Lotes**, rode `python monitorar_semana.py 13` (ajuste o número). O comando lê o CSV já pontuado da API, valida a versão e o corte e salva drift e saída em `monitoramento/semana_13/`. Depois de importar rótulos, rode o mesmo comando para acompanhar a cobertura e a performance global e por canal. Até receber todos os rótulos, o custo observado abrange só as transações já rotuladas. Um canal ausente na referência tem status próprio na tabela. Em caso de troca do champion, execute `python preparar_monitoramento.py` para registrar a referência da nova run.
+
+## Reproduzir a comparação de modelos
+
+```powershell
+python avaliar_modelos.py
+python -m unittest discover -s tests -v
+```
+
+O primeiro comando funciona com o contrato e os CSVs locais. Ele treina nas semanas 1–10, busca cortes de 0,01 a 0,99 nas semanas 11–12 e grava `resultados_validacao/comparacao.json` e `resultados_validacao/curvas_custo.csv`. A comparação inclui custo, métricas por semana, clientes legítimos afetados e as três referências de custo da atividade. O campo `candidato` identifica a configuração de menor custo que superou as três referências.
+
+Com o MLflow ativo, use `python avaliar_modelos.py --candidato` para registrar o candidato de uma comparação já feita. O comando reaproveita o modelo exportado quando disponível. Use `python avaliar_modelos.py --mlflow` quando quiser treinar e registrar todas as configurações. O relatório passa a incluir o ID da run e a URI do artefato. Para publicar o candidato da comparação ampliada, marque `USAR_COMPARACAO_AMPLIADA = True` na célula de registro da seção 7. Em seguida, execute as seções 8 e 9 para verificar as previsões da API e registrar a referência da versão promovida. Registre a nova versão e a run no changelog antes de gerar o ZIP da seção 10.
+
+O notebook da atividade gera o ZIP de submissão na seção 10. Para executar todas as células, abra-o na raiz deste repositório com os CSVs, o MLflow e a API disponíveis.
 
 ## Recomeçar do zero
 
