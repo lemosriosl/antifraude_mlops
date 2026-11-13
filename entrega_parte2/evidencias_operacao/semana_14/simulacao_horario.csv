@@ -1,0 +1,9 @@
+cenario,canal,transacoes,retidas,taxa_retencao,valor_retido,clientes_retidos
+lote_pontuado,global,20483,812,0.03964263047405165,391360.35,800
+lote_pontuado,cartao_online,5149,325,0.063119052243154,161796.68,321
+lote_pontuado,cartao_presencial,6003,171,0.02848575712143928,72348.48,171
+lote_pontuado,pix,9331,316,0.033865609259457724,157215.19,315
+simulacao_menos_3h,global,20483,553,0.026997998340086902,276591.76,547
+simulacao_menos_3h,cartao_online,5149,222,0.0431151679937852,95014.56,220
+simulacao_menos_3h,cartao_presencial,6003,124,0.020656338497417957,61028.96,124
+simulacao_menos_3h,pix,9331,207,0.02218411745793591,120548.24,207

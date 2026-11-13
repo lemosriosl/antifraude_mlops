@@ -1,0 +1,37 @@
+flavors:
+  python_function:
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.13.18
+  sklearn:
+    code: null
+    pickled_model: model.pkl
+    serialization_format: cloudpickle
+    sklearn_version: 1.8.0
+mlflow_version: 2.19.0
+model_size_bytes: 198431
+model_uuid: 72a236c0f55246e0b38cf1745eeb4211
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "valor_transacao", "required": true}, {"type":
+    "long", "name": "hora_transacao", "required": true}, {"type": "long", "name":
+    "dia_semana", "required": true}, {"type": "string", "name": "canal", "required":
+    true}, {"type": "long", "name": "dispositivo_novo", "required": true}, {"type":
+    "long", "name": "qtd_transacoes_1h", "required": true}, {"type": "double", "name":
+    "valor_medio_30d", "required": true}, {"type": "double", "name": "razao_valor_media",
+    "required": true}, {"type": "double", "name": "distancia_ultima_transacao_km",
+    "required": true}, {"type": "long", "name": "idade_conta_dias", "required": true},
+    {"type": "long", "name": "destinatario_novo", "required": true}, {"type": "string",
+    "name": "categoria_estabelecimento", "required": true}, {"type": "string", "name":
+    "uf_cliente", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1]}}]'
+  params: null
+utc_time_created: '2026-11-10 11:17:46.011487'

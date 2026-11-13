@@ -1,0 +1,95 @@
+# Contrato de features — Banco Aurora / Prevenção a Fraudes
+# Dono: time de plataforma de dados.
+#
+# Todo modelo em produção consome EXATAMENTE estas features, nesta ordem,
+# com estas regras. O sistema lê este arquivo a cada lote recebido e rejeita
+# o lote que não respeitar o contrato.
+#
+# Mudou alguma regra? Suba a versão e registre no changelog abaixo.
+
+versao: "1.0"
+
+metadados: [id_transacao, id_cliente, semana, data_transacao]
+
+features:
+  - nome: valor_transacao
+    tipo: float
+    min: 0.01
+    regra: "Valor da transação em reais, 2 casas decimais."
+
+  - nome: hora_transacao
+    tipo: int
+    min: 0
+    max: 23
+    regra: "Hora da transação no horário de Brasília."
+
+  - nome: dia_semana
+    tipo: int
+    min: 0
+    max: 6
+    regra: "0 = segunda-feira, 6 = domingo."
+
+  - nome: canal
+    tipo: categoria
+    valores: [pix, cartao_presencial, cartao_online]
+    regra: "Canal de origem da transação."
+
+  - nome: dispositivo_novo
+    tipo: bool
+    regra: "1 se é o primeiro uso do dispositivo nos últimos 30 dias, senão 0."
+
+  - nome: qtd_transacoes_1h
+    tipo: int
+    min: 0
+    regra: "Transações do mesmo cliente na hora anterior (sem contar esta)."
+
+  - nome: valor_medio_30d
+    tipo: float
+    min: 0.01
+    regra: "Valor médio das transações do cliente nos últimos 30 dias, em reais."
+
+  - nome: razao_valor_media
+    tipo: float
+    min: 0
+    regra: "valor_transacao / valor_medio_30d."
+
+  - nome: distancia_ultima_transacao_km
+    tipo: float
+    min: 0
+    regra: "Distância em km até o local da transação anterior do cliente."
+
+  - nome: idade_conta_dias
+    tipo: int
+    min: 0
+    regra: "Dias desde a abertura da conta."
+
+  - nome: destinatario_novo
+    tipo: bool
+    regra: "1 se é a primeira transação para essa chave Pix ou estabelecimento."
+
+  - nome: categoria_estabelecimento
+    tipo: categoria
+    valores: [combustivel, eletronicos, farmacia, games_digitais, restaurante,
+              servicos, supermercado, transferencia_pessoal, varejo, viagem]
+    regra: "Grupo de MCC do estabelecimento (Pix: tipo de destino)."
+
+  - nome: uf_cliente
+    tipo: categoria
+    valores: [AC, AL, AM, AP, BA, CE, DF, ES, GO, MA, MG, MS, MT, PA, PB, PE,
+              PI, PR, RJ, RN, RO, RR, RS, SC, SE, SP, TO]
+    regra: "UF do endereço do cliente."
+
+# Regras que envolvem mais de uma coluna. Cada regra tem:
+#   nome      identificador curto
+#   quando    filtro no formato do pandas .query() (opcional; sem ele vale para todas as linhas)
+#   exigir    condição que as linhas filtradas precisam cumprir
+# Exemplo (fictício):
+#   - nome: presencial_tem_distancia
+#     quando: "canal == 'cartao_presencial'"
+#     exigir: "distancia_ultima_transacao_km >= 0"
+regras: []
+
+changelog:
+  - versao: "1.0"
+    data: "2026-11-06"
+    mudanca: "Versão inicial do contrato."

@@ -1,0 +1,47 @@
+artifact_path: "file:C:/Users/levyrios-ieg/OneDrive - Instituto Germinare/\xC1rea\
+  \ de Trabalho/3 ano/TECH/Ciencia de Dados/cdd_pratica_mlops_parte1/antifraude_mlops/mlruns/4/models/m-f86475804c844b08953a5e8a2d91a14d/artifacts"
+flavors:
+  python_function:
+    code: code
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.sklearn
+    model_path: model.pkl
+    predict_fn: predict
+    python_version: 3.14.5
+  sklearn:
+    code: code
+    pickled_model: model.pkl
+    serialization_format: pickle
+    sklearn_version: 1.8.0
+    skops_trusted_types: null
+is_signature_from_type_hint: false
+mlflow_version: 3.16.0
+model_id: m-f86475804c844b08953a5e8a2d91a14d
+model_size_bytes: 9032976
+model_uuid: m-f86475804c844b08953a5e8a2d91a14d
+prompts: null
+run_id: 98e2f8417abf497ebb1132c0a39f5258
+saved_input_example_info:
+  artifact_path: input_example.json
+  pandas_orient: split
+  serving_input_path: serving_input_example.json
+  type: dataframe
+signature:
+  inputs: '[{"type": "double", "name": "valor_transacao", "required": true}, {"type":
+    "long", "name": "hora_transacao", "required": true}, {"type": "long", "name":
+    "dia_semana", "required": true}, {"type": "string", "name": "canal", "required":
+    true}, {"type": "long", "name": "dispositivo_novo", "required": true}, {"type":
+    "long", "name": "qtd_transacoes_1h", "required": true}, {"type": "double", "name":
+    "valor_medio_30d", "required": true}, {"type": "double", "name": "razao_valor_media",
+    "required": true}, {"type": "double", "name": "distancia_ultima_transacao_km",
+    "required": true}, {"type": "long", "name": "idade_conta_dias", "required": true},
+    {"type": "long", "name": "destinatario_novo", "required": true}, {"type": "string",
+    "name": "categoria_estabelecimento", "required": true}, {"type": "string", "name":
+    "uf_cliente", "required": true}]'
+  outputs: '[{"type": "tensor", "tensor-spec": {"dtype": "float64", "shape": [-1,
+    2]}}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2026-11-11 02:35:48.202262'

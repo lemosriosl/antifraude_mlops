@@ -20,6 +20,16 @@ Modelo de entrada:
 
 <!-- Escreva a sua primeira entrada (v1.0.0) abaixo desta linha. -->
 
+## v1.1.1 — 12/11/2026
+
+- **Tipo:** correção dos dados dos lotes 15 e 16.
+- **Versão no MLflow:** `antifraude v7` (`@champion`), corte 0,09, contrato v1.0 e referência das semanas 11–12.
+- **O que mudou:** o reprocessamento explícito das semanas 15 e 16 converteu os timestamps da Vértice de UTC para Brasília, derivou a hora e o dia da semana e gravou novas predições. O CSV de origem e os scores originais foram preservados.
+- **Por quê:** o deslocamento de três horas apareceu nas semanas 14 a 16. No teste retrospectivo da semana 14, a conversão reduziu o custo estimado de R$ 15.065,62 para R$ 10.525,93. A operação registrada da semana 14 foi preservada.
+- **Evidência:** runs de operação `8b3dff66abf04f80896908490dc00f8d` (semana 15) e `b34d20d45413499e82cb14af7cfd5a83` (semana 16) no experimento `antifraude-operacao`, com os hashes dos arquivos, os intervalos das predições e o relatório após a correção. Cinco scores e decisões da API foram conferidos por lote.
+- **Impacto:** na semana 15, 750 → 506 retenções (3,74% → 2,52%) e 741 → 501 clientes com retenção. Com as contestações da 15, o custo foi de R$ 9.759,94 após a correção, ante R$ 14.503,03 com a pontuação original. A proporção de fraudes detectadas (recall) subiu de 78,14% para 81,38%. Na semana 16, 803 → 546 retenções (4,02% → 2,74%) e 789 → 538 clientes com retenção. Custo e recall da 16 aguardam as contestações.
+- **Retreinou?** Não.
+
 ## v1.1.0 — 10/11/2026
 
 - **Tipo:** modelo
@@ -29,6 +39,14 @@ Modelo de entrada:
 - **Evidência:** run `98e2f8417abf497ebb1132c0a39f5258`, com 39.497 transações na referência. Os cinco scores e decisões da API bateram com o notebook. O modelo foi treinado nas semanas 1 a 10 e escolhido nas semanas 11 e 12.
 - **Impacto:** economia de R$ 5.156,31 (21,46%) frente à v3 na validação. A taxa de bloqueio passou de 2,96% para 2,77%, o recall de 86,00% para 85,17% e a precisão de 44,18% para 46,67%. Foram bloqueadas 584 transações legítimas e aprovadas 89 fraudes.
 - **Retreinou?** Sim. A v7 veio da comparação ampliada, usando as mesmas semanas de treino.
+
+### Histórico de trocas antes da semana 13
+
+O histórico do sistema e do MLflow, incluído na entrega em `evidencias_mlflow.json`, registra a sequência `v3 → v4 → v5 → v6 → v7`.
+
+- **v3 → v4:** a run `b8e2bf42e82e40258dc55cb151c91d6d` republicou o mesmo modelo serializado da v3, com corte de 0,29. O `features.py` passou a procurar o YAML do contrato também ao lado do código exportado. As decisões das 39.497 transações de validação ficaram iguais.
+- **v4 → v5:** a run `98e2f8417abf497ebb1132c0a39f5258` colocou em uso a floresta regularizada, com corte de 0,09. O motivo registrado foi o menor custo na validação das semanas 11 e 12 (R$ 18.866,83, ante R$ 24.023,14).
+- **v5 → v6 → v7:** os três registros apontam para a mesma run e registram o mesmo corte de 0,09 e a mesma justificativa de menor custo. O histórico exportado contém apenas essa justificativa para as duas trocas. A v7 é a versão `@champion` usada nas quatro semanas da Parte 2 e identificada nos metadados da referência.
 
 ## v1.0.0 — 07/11/2026
 

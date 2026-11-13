@@ -1,0 +1,66 @@
+{
+  "dataframe_split": {
+    "columns": [
+      "valor_transacao",
+      "hora_transacao",
+      "dia_semana",
+      "canal",
+      "dispositivo_novo",
+      "qtd_transacoes_1h",
+      "valor_medio_30d",
+      "razao_valor_media",
+      "distancia_ultima_transacao_km",
+      "idade_conta_dias",
+      "destinatario_novo",
+      "categoria_estabelecimento",
+      "uf_cliente"
+    ],
+    "data": [
+      [
+        65.66,
+        0,
+        0,
+        "pix",
+        1,
+        2,
+        68.41,
+        0.9598,
+        61.1,
+        1307,
+        1,
+        "transferencia_pessoal",
+        "GO"
+      ],
+      [
+        132.33,
+        0,
+        0,
+        "pix",
+        0,
+        0,
+        94.42,
+        1.4015,
+        5.7,
+        1953,
+        0,
+        "transferencia_pessoal",
+        "RS"
+      ],
+      [
+        15.67,
+        0,
+        0,
+        "cartao_presencial",
+        0,
+        0,
+        15.26,
+        1.0269,
+        4.1,
+        420,
+        0,
+        "combustivel",
+        "SP"
+      ]
+    ]
+  }
+}

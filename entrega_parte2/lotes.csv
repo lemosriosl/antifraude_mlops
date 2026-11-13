@@ -1,0 +1,5 @@
+semana,arquivo,recebido_em,qtd_linhas,versao_contrato,rotulos
+13,transacoes_semana_13.csv,2026-11-12T10:04:30.122,19419,1.0,19419
+14,transacoes_semana_14.csv,2026-11-12T10:09:47.464,20483,1.0,20483
+15,transacoes_semana_15.csv,2026-11-12T10:24:37.992,20062,1.0,20062
+16,transacoes_semana_16.csv,2026-11-12T11:15:36.957,19959,1.0,0

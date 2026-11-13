@@ -13,8 +13,17 @@ O que o sistema espera da versão registrada
    como pyfunc, o predict precisa devolver a probabilidade de fraude.
 3. Tem a tag `threshold` NA VERSÃO (não na run), com o corte de bloqueio.
    score >= threshold -> bloqueia.
+
+Código próprio (code_paths)
+---------------------------
+Se a versão foi registrada com code_paths=["features.py"], o sistema usa o
+features.py QUE FOI REGISTRADO COM ELA, não o da sua pasta. Ao trocar de
+versão, o código da versão anterior é descarregado antes de carregar a nova
+(o MLflow, sozinho, reaproveitaria o módulo antigo que ficou em memória).
 """
+import sys
 import threading
+from pathlib import Path
 
 import mlflow
 import numpy as np
@@ -38,6 +47,20 @@ class _Producao:
         self.descricao = None
         self._modelo = None
         self._sklearn = False
+        self._modulos = set()      # módulos vindos do code_paths da versão carregada
+        self._caminhos = set()     # pastas code/ que o MLflow pôs no sys.path
+
+    def _descarregar_codigo(self, local):
+        """Tira da memória o código da versão anterior e o da nova (para ser lido do zero)."""
+        codigo = Path(local) / "code"
+        novos = {p.stem for p in codigo.rglob("*.py")} | {p.name for p in codigo.iterdir() if p.is_dir()} \
+            if codigo.exists() else set()
+        for nome in self._modulos | novos:
+            for m in [m for m in sys.modules if m == nome or m.startswith(nome + ".")]:
+                del sys.modules[m]
+        sys.path[:] = [p for p in sys.path if p not in self._caminhos]
+        self._modulos = novos
+        self._caminhos = {str(p) for p in Path(local).rglob("code") if p.is_dir()}
 
     def _cliente(self):
         mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
@@ -51,29 +74,29 @@ class _Producao:
             raise SemModeloEmProducao(
                 f"Não há '{config.NOME_MODELO}@{config.ALIAS_PRODUCAO}' no MLflow ({config.MLFLOW_TRACKING_URI}). "
                 "Registre um modelo e aponte o alias champion para ele.") from e
-        versao = str(mv.version)
-        if versao == self.versao:
+        if mv.version == self.versao:
             return self
         if config.TAG_THRESHOLD not in mv.tags:
             raise SemModeloEmProducao(
                 f"A versão {mv.version} não tem a tag '{config.TAG_THRESHOLD}'. "
                 "Grave o threshold como tag da VERSÃO do modelo (client.set_model_version_tag).")
         with self._lock:
-            uri = f"models:/{config.NOME_MODELO}/{mv.version}"
+            local = mlflow.artifacts.download_artifacts(artifact_uri=f"models:/{config.NOME_MODELO}/{mv.version}")
+            self._descarregar_codigo(local)
             try:
-                self._modelo = mlflow.sklearn.load_model(uri)
+                self._modelo = mlflow.sklearn.load_model(local)
                 self._sklearn = hasattr(self._modelo, "predict_proba")
             except Exception:
-                self._modelo = mlflow.pyfunc.load_model(uri)
+                self._modelo = mlflow.pyfunc.load_model(local)
                 self._sklearn = False
             anterior = banco.ultima_troca()
-            self.versao = versao
+            self.versao = mv.version
             self.threshold = float(mv.tags[config.TAG_THRESHOLD])
             self.run_id = mv.run_id
             self.descricao = mv.description
-            if anterior is None or str(anterior["versao_nova"]) != versao:
+            if anterior is None or str(anterior["versao_nova"]) != str(mv.version):
                 banco.registrar_troca(None if anterior is None else anterior["versao_nova"],
-                                      versao, self.threshold, mv.tags.get(config.TAG_MOTIVO))
+                                      mv.version, self.threshold, mv.tags.get(config.TAG_MOTIVO))
         return self
 
     def pontuar(self, df):

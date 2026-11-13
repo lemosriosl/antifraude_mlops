@@ -1,0 +1,37 @@
+{
+  "semana": 15,
+  "arquivo": "transacoes_semana_15.csv",
+  "versao_correcao": "1.1.1",
+  "origem": "vertice-utc",
+  "destino": "America/Sao_Paulo",
+  "contrato": "1.0",
+  "sha256_original": "737d2c182362ef58e28d941fdf4f808675541f4cd949f6c6f62d0e7bd1a310be",
+  "sha256_corrigido": "25f44a1f22336dedc017f64cb48f8dca9df3f2a7608c032ec44f2db14c177d30",
+  "modelo": {
+    "versao": "7",
+    "run_id": "98e2f8417abf497ebb1132c0a39f5258",
+    "threshold": 0.09
+  },
+  "antes": {
+    "transacoes": 20062,
+    "retidas": 750,
+    "taxa_retencao": 0.03738410926129,
+    "valor_retido": 349188.86,
+    "clientes_retidos": 741
+  },
+  "depois": {
+    "transacoes": 20062,
+    "retidas": 506,
+    "taxa_retencao": 0.025221812381616988,
+    "valor_retido": 270299.69,
+    "clientes_retidos": 501
+  },
+  "predicoes_originais": [
+    39903,
+    59964
+  ],
+  "predicoes_corrigidas": [
+    59965,
+    80026
+  ]
+}

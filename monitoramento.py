@@ -108,16 +108,17 @@ def drift_discretas(referencia, lote, colunas=None):
     return tabela
 
 
-def saida_modelo(referencia, lote, threshold):
+def saida_modelo(referencia, lote, threshold, *, threshold_lote=None):
     """Taxa, contagem e valor bloqueado do modelo em cada conjunto."""
     linhas = []
-    for nome, df in (("referencia", referencia), ("lote", lote)):
+    corte_lote = threshold if threshold_lote is None else threshold_lote
+    for nome, df, corte in (("referencia", referencia, threshold), ("lote", lote, corte_lote)):
         _exigir_colunas(df, ["score", "valor_transacao"], nome)
         score = pd.to_numeric(df["score"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
         valor = pd.to_numeric(df["valor_transacao"], errors="coerce").to_numpy(dtype=float, na_value=np.nan)
         if not ((0 <= score) & (score <= 1)).all() or not np.isfinite(valor).all():
             raise ValueError(f"{nome}: score ou valor_transacao ausente/inválido")
-        bloqueada = score >= threshold
+        bloqueada = score >= corte
         linhas.append({
             "conjunto": nome, "transacoes": len(df), "bloqueios": int(bloqueada.sum()),
             "taxa_bloqueio": float(bloqueada.mean()) if len(df) else np.nan,
@@ -133,7 +134,7 @@ def saida_modelo(referencia, lote, threshold):
     return tabela
 
 
-def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bloqueada=15.0):
+def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bloqueada=15.0, *, threshold_lote=None):
     """Recall, precision, PR-AUC (average precision) e custo, globais e por segmento.
 
     Com rótulos parciais, as métricas descrevem apenas as transações rotuladas.
@@ -141,7 +142,8 @@ def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bl
     """
     linhas = []
     cobertura_completa = {}
-    for nome, df in (("referencia", referencia), ("lote", lote)):
+    corte_lote = threshold if threshold_lote is None else threshold_lote
+    for nome, df, corte in (("referencia", referencia, threshold), ("lote", lote, corte_lote)):
         _exigir_colunas(df, ["fraude", "score", "valor_transacao", segmento], nome)
         if not df["fraude"].dropna().isin([0, 1]).all():
             raise ValueError(f"{nome}: fraude deve conter apenas 0 e 1")
@@ -156,9 +158,9 @@ def performance(referencia, lote, threshold, segmento="canal", custo_legitima_bl
             valores = rotuladas["valor_transacao"].to_numpy(dtype=float)
             if not np.isfinite(valores).all() or not ((0 <= score) & (score <= 1)).all():
                 raise ValueError(f"{nome}: score ou valor_transacao ausente/inválido")
-            bloqueada = score >= threshold
+            bloqueada = score >= corte
             custo_observado = (
-                custo_decisao(y, valores, score, threshold, custo_legitima_bloqueada) if len(y) else np.nan
+                custo_decisao(y, valores, score, corte, custo_legitima_bloqueada) if len(y) else np.nan
             )
             linhas.append({
                 "conjunto": nome, "segmento": tipo, "valor_segmento": valor,
@@ -259,3 +261,46 @@ def carregar_referencia_champion():
         raise ValueError("Threshold do champion difere da referência; atualize a referência")
     referencia = pd.read_csv(caminho, dtype={"id_transacao": str})
     return referencia, threshold, str(versao.version)
+
+
+def relatorio_semana(semana, segmento="canal"):
+    """Compara a semana corrente e o histórico da operação com a referência do champion.
+
+    Cada semana usa o corte gravado com seus scores. A performance só considera
+    semanas anteriores, porque os rótulos chegam com uma semana de atraso.
+    """
+    if semana < 13:
+        raise ValueError("O relatório de operação começa na semana 13")
+    referencia, threshold, versao = carregar_referencia_champion()
+    saidas, desempenhos = [], []
+    for numero in range(13, semana + 1):
+        lote = carregar_semana(numero)
+        versoes = lote["versao_modelo"].astype("string").unique()
+        cortes = lote["threshold"].unique()
+        if len(versoes) != 1 or pd.isna(versoes[0]) or len(cortes) != 1 or not 0 <= cortes[0] <= 1:
+            raise ValueError(f"Semana {numero}: versão ou threshold ausente ou misturado")
+        versao_lote, corte = versoes[0], cortes[0]
+        if numero == semana and (versao_lote != versao or corte != threshold):
+            raise ValueError(f"Semana {numero}: pontuação não corresponde ao champion v{versao} e seu threshold")
+
+        saida = saida_modelo(referencia, lote, threshold, threshold_lote=corte)
+        ref = saida["conjunto"].eq("referencia")
+        saida["semana"] = pd.Series(numero, index=saida.index, dtype="Int64").mask(ref)
+        saida["versao_modelo"] = saida["conjunto"].map({"referencia": versao, "lote": versao_lote})
+        saida["threshold"] = saida["conjunto"].map({"referencia": threshold, "lote": corte})
+        saidas.append(saida if numero == 13 else saida.loc[~ref])
+
+        if numero < semana:
+            tabela = performance(referencia, lote, threshold, segmento, threshold_lote=corte)
+            ref = tabela["conjunto"].eq("referencia")
+            tabela["semana"] = pd.Series(numero, index=tabela.index, dtype="Int64").mask(ref)
+            tabela["versao_modelo"] = tabela["conjunto"].map({"referencia": versao, "lote": versao_lote})
+            tabela["threshold"] = tabela["conjunto"].map({"referencia": threshold, "lote": corte})
+            desempenhos.append(tabela if numero == 13 else tabela.loc[~ref])
+
+    return {
+        "continuas": drift_continuas(referencia, lote),
+        "discretas": drift_discretas(referencia, lote),
+        "saida": pd.concat(saidas, ignore_index=True),
+        "performance": pd.concat(desempenhos, ignore_index=True) if desempenhos else None,
+    }

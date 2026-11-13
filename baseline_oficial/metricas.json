@@ -1,0 +1,14 @@
+{
+  "algoritmo": "hist_gradient_boosting",
+  "treino": "semanas 1-10",
+  "validacao": "semanas 11-12",
+  "versao_contrato": "1.0",
+  "metricas_validacao": {
+    "pr_auc": 0.8115,
+    "threshold": 0.05,
+    "recall": 0.8367,
+    "precision": 0.4714,
+    "custo_validacao": 28448.23,
+    "custo_threshold_05": 44638.12
+  }
+}
