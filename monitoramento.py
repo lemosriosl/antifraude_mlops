@@ -250,20 +250,24 @@ def carregar_referencia_champion():
 
     mlflow.set_tracking_uri(config.MLFLOW_TRACKING_URI)
     versao = MlflowClient().get_model_version_by_alias(config.NOME_MODELO, config.ALIAS_PRODUCAO)
-    caminho = Path(mlflow.artifacts.download_artifacts(
-        run_id=versao.run_id, artifact_path="referencia/validacao_11_12.csv"))
-    metadados = json.loads(Path(mlflow.artifacts.download_artifacts(
-        run_id=versao.run_id, artifact_path="referencia/metadados.json")).read_text(encoding="utf-8"))
-    if str(metadados["versao"]) != str(versao.version) or metadados["run_id"] != versao.run_id:
-        raise ValueError("Metadados da referência não correspondem ao champion")
     threshold = float(versao.tags[config.TAG_THRESHOLD])
-    if threshold != float(metadados["threshold"]):
-        raise ValueError("Threshold do champion difere da referência; atualize a referência")
+    artefato = versao.tags.get("referencia_vigente")
+    if not artefato:
+        artefato = "validacao_11_12.csv"
+        caminho_meta = mlflow.artifacts.download_artifacts(
+            run_id=versao.run_id, artifact_path="referencia/metadados.json")
+        metadados = json.loads(Path(caminho_meta).read_text(encoding="utf-8"))
+        if str(metadados["versao"]) != str(versao.version) or metadados["run_id"] != versao.run_id:
+            raise ValueError("Metadados da referência não correspondem ao champion")
+        if threshold != float(metadados["threshold"]):
+            raise ValueError("Threshold do champion difere da referência; atualize a referência")
+    caminho = mlflow.artifacts.download_artifacts(
+        run_id=versao.run_id, artifact_path=f"referencia/{artefato}")
     referencia = pd.read_csv(caminho, dtype={"id_transacao": str})
     return referencia, threshold, str(versao.version)
 
 
-def relatorio_semana(semana, segmento="canal"):
+def relatorio_semana(semana, segmento="canal", *, preparar_features=None):
     """Compara a semana corrente e o histórico da operação com a referência do champion.
 
     Cada semana usa o corte gravado com seus scores. A performance só considera
@@ -298,9 +302,10 @@ def relatorio_semana(semana, segmento="canal"):
             tabela["threshold"] = tabela["conjunto"].map({"referencia": threshold, "lote": corte})
             desempenhos.append(tabela if numero == 13 else tabela.loc[~ref])
 
+    lote_drift = preparar_features(lote) if preparar_features else lote
     return {
-        "continuas": drift_continuas(referencia, lote),
-        "discretas": drift_discretas(referencia, lote),
+        "continuas": drift_continuas(referencia, lote_drift),
+        "discretas": drift_discretas(referencia, lote_drift),
         "saida": pd.concat(saidas, ignore_index=True),
         "performance": pd.concat(desempenhos, ignore_index=True) if desempenhos else None,
     }

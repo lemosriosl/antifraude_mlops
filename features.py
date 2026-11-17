@@ -13,7 +13,9 @@ que use este módulo, inclua ``code_paths=["features.py"]``.
 
 from pathlib import Path
 
+import numpy as np
 import yaml
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
@@ -82,3 +84,44 @@ def criar_preprocessador(contrato=None):
         remainder="drop",
         verbose_feature_names_out=False,
     )
+
+
+def pix_dispositivo_conhecido(df):
+    """Pix em aparelho já usado, com duas ou mais transações na hora anterior."""
+    return df["canal"].eq("pix") & df["dispositivo_novo"].eq(0) & df["qtd_transacoes_1h"].ge(2)
+
+
+class EspecialistaPix(ClassifierMixin, BaseEstimator):
+    """Mantém o score anterior fora do grupo e aplica um modelo treinado no grupo."""
+
+    def __init__(self, modelo_atual, especialista, corte_atual, corte_especialista):
+        self.modelo_atual = modelo_atual
+        self.especialista = especialista
+        self.corte_atual = corte_atual
+        self.corte_especialista = corte_especialista
+
+    def __sklearn_is_fitted__(self):
+        return hasattr(self.especialista, "classes_")
+
+    @property
+    def classes_(self):
+        return self.especialista.classes_
+
+    def fit(self, X, y):
+        grupo = pix_dispositivo_conhecido(X)
+        self.especialista.fit(X.loc[grupo], np.asarray(y)[grupo.to_numpy()])
+        return self
+
+    def predict_proba(self, X):
+        grupo = pix_dispositivo_conhecido(X)
+        score = self.modelo_atual.predict_proba(X)[:, 1]
+        if grupo.any():
+            risco = self.especialista.predict_proba(X.loc[grupo])[:, 1]
+            # A API usa um corte único. O remapeamento preserva a ordem no grupo.
+            score[grupo.to_numpy()] = np.interp(
+                risco, [0, self.corte_especialista, 1], [0, self.corte_atual, 1],
+            )
+        return np.column_stack((1 - score, score))
+
+    def predict(self, X):
+        return (self.predict_proba(X)[:, 1] >= self.corte_atual).astype(int)

@@ -1,0 +1,203 @@
+{
+  "aluno": "Levy Guilherme Lemos Rios",
+  "gerado_em": "2026-11-14T19:01:37",
+  "champion": {
+    "versao": "9",
+    "run_id": "d81b7759854042a0a939e3f2832af1d6",
+    "descricao": "Especialista boosting_pix para Pix em aparelho conhecido com 2+ transações na hora anterior. Corte calibrado por custo: 0.0042658561. Fora do grupo, mantém scores e decisões da v8. Validação temporal na semana 19; contrato v1.1.",
+    "tags": {
+      "threshold": "0.05",
+      "motivo": "Mitigar deterioração de detecção no Pix",
+      "referencia_vigente": "referencia_semana_19.csv",
+      "versao_contrato": "1.1",
+      "rollback": "8"
+    }
+  },
+  "versoes": [
+    {
+      "versao": "1",
+      "aliases": [],
+      "run_id": "c12f0d7358ce418d86e76ca3b66a0006",
+      "criada_em": 1794092355609,
+      "descricao": "Algoritmo: random_forest. Threshold: 0.29. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 24,023.14), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.29",
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      }
+    },
+    {
+      "versao": "2",
+      "aliases": [],
+      "run_id": "ec0747c51cb3457ba9f148fe0738b0df",
+      "criada_em": 1794093090545,
+      "descricao": "Algoritmo: random_forest. Threshold: 0.29. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 24,023.14), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.29",
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      }
+    },
+    {
+      "versao": "3",
+      "aliases": [],
+      "run_id": "7260ffdde12740b38a547f1a41c50a98",
+      "criada_em": 1794094413444,
+      "descricao": "Algoritmo: random_forest. Threshold: 0.29. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 24,023.14), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.29",
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      }
+    },
+    {
+      "versao": "4",
+      "aliases": [],
+      "run_id": "b8e2bf42e82e40258dc55cb151c91d6d",
+      "criada_em": 1794363249574,
+      "descricao": "Algoritmo: random_forest. Threshold: 0.29. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 24,023.14), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.29",
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      }
+    },
+    {
+      "versao": "5",
+      "aliases": [],
+      "run_id": "98e2f8417abf497ebb1132c0a39f5258",
+      "criada_em": 1794364829801,
+      "descricao": "Algoritmo: floresta_regularizada. Threshold: 0.09. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 18,866.83), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.09",
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      }
+    },
+    {
+      "versao": "6",
+      "aliases": [],
+      "run_id": "98e2f8417abf497ebb1132c0a39f5258",
+      "criada_em": 1794365220405,
+      "descricao": "Algoritmo: floresta_regularizada. Threshold: 0.09. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 18,866.83), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.09",
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      }
+    },
+    {
+      "versao": "7",
+      "aliases": [],
+      "run_id": "98e2f8417abf497ebb1132c0a39f5258",
+      "criada_em": 1794365745762,
+      "descricao": "Algoritmo: floresta_regularizada. Threshold: 0.09. Escolhido pelo menor custo financeiro na validação das semanas 11 e 12 (R$ 18,866.83), equilibrando fraude aprovada e bloqueios legítimos.",
+      "tags": {
+        "threshold": "0.09",
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      }
+    },
+    {
+      "versao": "8",
+      "aliases": [],
+      "run_id": "a296fb0a32b04d2c8f07d50d6b5aad06",
+      "criada_em": 1794692554437,
+      "descricao": "Estado oficial pós-parte 2 | baseline oficial (mesmos pesos) + conversão UTC->Brasília (contrato v1.1) | threshold 0.05",
+      "tags": {
+        "threshold": "0.05",
+        "motivo": "estado oficial pós-parte 2 (v1.0.1)",
+        "versao_contrato": "1.1",
+        "referencia_vigente": "referencia_validacao.csv"
+      }
+    },
+    {
+      "versao": "9",
+      "aliases": [],
+      "run_id": "d81b7759854042a0a939e3f2832af1d6",
+      "criada_em": 1794693286899,
+      "descricao": "Especialista boosting_pix para Pix em aparelho conhecido com 2+ transações na hora anterior. Corte calibrado por custo: 0.0042658561. Fora do grupo, mantém scores e decisões da v8. Validação temporal na semana 19; contrato v1.1.",
+      "tags": {
+        "threshold": "0.05",
+        "motivo": "Mitigar deterioração de detecção no Pix",
+        "referencia_vigente": "referencia_semana_19.csv",
+        "versao_contrato": "1.1",
+        "rollback": "8"
+      }
+    }
+  ],
+  "referencia_champion": [
+    "referencia/referencia_semana_19.csv"
+  ],
+  "contrato": {
+    "versao": "1.1",
+    "regras": [],
+    "changelog": [
+      {
+        "versao": "1.1",
+        "data": "2026-11-06",
+        "mudanca": "Versão inicial do contrato."
+      },
+      {
+        "versao": "1.1",
+        "data": "2026-09-01",
+        "mudanca": "hora_transacao e dia_semana passam a vir em UTC (migração para a Vértice, semana 14). O modelo converte para Brasília."
+      }
+    ]
+  },
+  "sistema": {
+    "modelo": {
+      "ok": true,
+      "versao": "9",
+      "threshold": 0.05,
+      "run_id": "d81b7759854042a0a939e3f2832af1d6",
+      "descricao": "Especialista boosting_pix para Pix em aparelho conhecido com 2+ transações na hora anterior. Corte calibrado por custo: 0.0042658561. Fora do grupo, mantém scores e decisões da v8. Validação temporal na semana 19; contrato v1.1."
+    },
+    "contrato": "1.1",
+    "trocas": [
+      {
+        "trocado_em": "2026-11-14T21:55:27.885",
+        "versao_anterior": "8",
+        "versao_nova": "9",
+        "threshold": 0.05,
+        "motivo": "Mitigar deterioração de detecção no Pix"
+      },
+      {
+        "trocado_em": "2026-11-14T21:43:11.185",
+        "versao_anterior": "7",
+        "versao_nova": "8",
+        "threshold": 0.05,
+        "motivo": "estado oficial pós-parte 2 (v1.0.1)"
+      },
+      {
+        "trocado_em": "2026-11-11T02:55:48.770",
+        "versao_anterior": "6",
+        "versao_nova": "7",
+        "threshold": 0.09,
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      },
+      {
+        "trocado_em": "2026-11-11T02:47:03.892",
+        "versao_anterior": "5",
+        "versao_nova": "6",
+        "threshold": 0.09,
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      },
+      {
+        "trocado_em": "2026-11-11T02:42:57.976",
+        "versao_anterior": "4",
+        "versao_nova": "5",
+        "threshold": 0.09,
+        "motivo": "Menor custo na comparação ampliada das semanas 11 e 12"
+      },
+      {
+        "trocado_em": "2026-11-11T02:14:19.074",
+        "versao_anterior": "3",
+        "versao_nova": "4",
+        "threshold": 0.29,
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      },
+      {
+        "trocado_em": "2026-11-07T23:34:00.008",
+        "versao_anterior": null,
+        "versao_nova": "3",
+        "threshold": 0.29,
+        "motivo": "v1.0.0 - primeiro modelo em produção"
+      }
+    ]
+  },
+  "avisos": []
+}

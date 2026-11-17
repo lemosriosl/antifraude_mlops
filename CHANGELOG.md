@@ -20,6 +20,25 @@ Modelo de entrada:
 
 <!-- Escreva a sua primeira entrada (v1.0.0) abaixo desta linha. -->
 
+## Parte 3 — especialista para Pix — 14/11/2026
+
+- **Tipo:** modelo e referência.
+- **Versão no MLflow:** **antifraude v9**, run `d81b7759854042a0a939e3f2832af1d6`, corte publicado 0,05 e contrato v1.1.
+- **O que mudou:** um classificador de árvores por boosting pontua Pix em aparelho conhecido com duas ou mais transações na hora anterior. Seu corte interno de 0,0042658561 foi escolhido pelo custo e remapeado para 0,05. A v8 continua pontuando todas as outras transações. O pipeline mantém a conversão de UTC para Brasília.
+- **Por quê:** nos rótulos da semana 18, o grupo concentrou 154 fraudes que passaram e R$ 29.544,12 em custo. O desempenho baixo se repetiu na semana 19.
+- **Evidência:** o especialista foi ajustado com o grupo nas semanas 13 a 17 e nos cinco primeiros dias da 18. O fim de semana da 18 serviu para escolher o estimador e os cortes. Na semana 19, com o modelo e o corte já definidos, o custo passou de R$ 43.639,74 para R$ 16.269,41, com recall de 56,07% para 88,28%. O corte por grupo sem retreino custaria R$ 17.158,67. A referência vigente é `referencia/referencia_semana_19.csv`, com scores da v9 e atributos em Brasília.
+- **Impacto:** repontuamos o lote 20, único sem contestações. As retenções passaram de 491 (2,47%) para 815 (4,10%) e as 324 retenções adicionais ficaram dentro do grupo. Conferimos 12 previsões na API, sendo seis no grupo, e os scores do lote inteiro após repontuar. Os lotes anteriores preservam a decisão que estava em produção.
+- **Retreinou?** Sim, apenas para o segmento afetado. Para voltar, restaure `@champion` na v8 e confirme a versão na API.
+
+## Parte 3 — adoção do estado oficial — 14/11/2026
+
+- **Tipo:** pipeline, modelo e contrato.
+- **Versão no MLflow:** **antifraude v8**, run `a296fb0a32b04d2c8f07d50d6b5aad06`, corte 0,05 e contrato v1.1.
+- **O que mudou:** adotamos o modelo oficial fornecido para o fim da Parte 2. O pipeline recebe a hora e o dia da Vértice em UTC e os converte para Brasília antes da pontuação, inclusive na virada do dia. A referência em Brasília está na run, em `referencia/referencia_validacao.csv`.
+- **Por quê:** a correção da Parte 2 alterou os dados armazenados dos lotes 15 e 16. O pipeline publicado até então dependia dessa correção externa. A versão oficial aplica a conversão aos novos lotes e à rota de previsão.
+- **Impacto operacional:** o champion v8 começa no lote 17. Preservamos as pontuações históricas das semanas 13 a 16. Os lotes 15 e 16 já têm hora corrigida no banco e sofreriam outra conversão se repontuados diretamente com a v8.
+- **Retreinou?** Não. A v8 contém os pesos do baseline oficial e o pipeline de fuso.
+
 ## v1.1.1 — 12/11/2026
 
 - **Tipo:** correção dos dados dos lotes 15 e 16.

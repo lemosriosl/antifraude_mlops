@@ -1,0 +1,15 @@
+uso,semana,grupo,count,sum
+calibracao,18,False,5695,110
+calibracao,18,True,176,49
+treino,13,False,18981,269
+treino,13,True,438,15
+treino,14,False,20014,282
+treino,14,True,469,21
+treino,15,False,19646,232
+treino,15,True,416,15
+treino,16,False,19454,300
+treino,16,True,505,15
+treino,17,False,19690,273
+treino,17,True,432,7
+treino,18,False,14230,204
+treino,18,True,406,119

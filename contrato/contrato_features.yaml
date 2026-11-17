@@ -7,7 +7,7 @@
 #
 # Mudou alguma regra? Suba a versão e registre no changelog abaixo.
 
-versao: "1.0"
+versao: "1.1"
 
 metadados: [id_transacao, id_cliente, semana, data_transacao]
 
@@ -21,13 +21,13 @@ features:
     tipo: int
     min: 0
     max: 23
-    regra: "Hora da transação no horário de Brasília."
+    regra: "Hora da transação em UTC (desde a semana 14, plataforma Vértice). Para Brasília: -3h."
 
   - nome: dia_semana
     tipo: int
     min: 0
     max: 6
-    regra: "0 = segunda-feira, 6 = domingo."
+    regra: "0 = segunda-feira, 6 = domingo. Dia em UTC desde a semana 14 (segue a hora)."
 
   - nome: canal
     tipo: categoria
@@ -90,6 +90,9 @@ features:
 regras: []
 
 changelog:
-  - versao: "1.0"
+  - versao: "1.1"
     data: "2026-11-06"
     mudanca: "Versão inicial do contrato."
+  - versao: "1.1"
+    data: "2026-09-01"
+    mudanca: "hora_transacao e dia_semana passam a vir em UTC (migração para a Vértice, semana 14). O modelo converte para Brasília."

@@ -1,0 +1,7 @@
+{
+  "turma": "A",
+  "versao": "v1.0.1",
+  "referencia_vigente": "referencia_validacao.csv",
+  "descricao": "Estado oficial pós-parte 2 | baseline oficial (mesmos pesos) + conversão UTC->Brasília (contrato v1.1) | threshold 0.05",
+  "threshold": 0.05
+}

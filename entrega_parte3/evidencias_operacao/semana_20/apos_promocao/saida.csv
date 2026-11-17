@@ -1,0 +1,3 @@
+conjunto,transacoes,bloqueios,taxa_bloqueio,valor_bloqueado,valor_total,pct_valor_bloqueado,delta_taxa_bloqueio_pp,delta_pct_valor_bloqueado_pp,alerta
+referencia,19328,851,0.04402938741721854,305926.79,3541487.5500000003,0.08638369772046776,0.0,0.0,False
+lote,19869,815,0.04101867230358851,262804.2,3643885.29,0.07212197396038228,-0.3010715113630033,-1.4261723760085485,False
